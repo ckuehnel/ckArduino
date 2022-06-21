@@ -1,6 +1,7 @@
 # ckArduino
 
 Arduino Programmbeispiele, die nicht im Arduino Handbuch betrachtet werden.
+
 Alle Dateien aus dem Buch
 
 Arduino
@@ -8,7 +9,7 @@ Das umfassende Handbuch.
 Rheinwerk-Verlag, 2020
 ISBN 978-3-8362-7345-9
 
-sind im Repository 
+sind im Repository https://github.com/ckuehnel/Arduino2020 enthalten.
 
 Zusätzliche Informationen in deutscher Sprache und Programmbeispiele sind in meinen Blogs unter https://ckblog2016.net/ und https://ckarduino.wordpress.com/ zu finden. Die dort erwähnten Programmbeispiele sind ebenfalls Bestandteil dieses Repositories.
 

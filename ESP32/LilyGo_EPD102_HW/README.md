@@ -1,0 +1,1 @@
+Bitte Datei boards.h unter ..\libraries\GxEPD durch die hier angegebene ersetzen.

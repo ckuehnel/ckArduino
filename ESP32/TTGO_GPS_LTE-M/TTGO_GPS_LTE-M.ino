@@ -11,6 +11,7 @@
 // Use Hardware Serial on Mega, Leonardo, Micro
 #define SerialAT Serial1
 
+// choose your modem
 #define TINY_GSM_MODEM_SIM7000
 #define TINY_GSM_RX_BUFFER 1024 // Set RX buffer to 1Kb
 
@@ -28,6 +29,7 @@ const char gprsPass[] = "";
 #include <TinyGsmClient.h>
 #include <SPI.h>
 #include <SD.h>
+#include <ArduinoJson.h>
 
 #ifdef DUMP_AT_COMMANDS
 #include <StreamDebugger.h>
@@ -53,7 +55,12 @@ TinyGsm modem(SerialAT);
 #define LED_PIN             12
 #define BAT_ADC             35
 
-uint16_t count = 0;  // Counter variable
+// GPS variables
+float lat,  lon, speed, alt;
+int usat;
+    
+// ENV variables
+float temp, humi;
 
 void enableGPS(void)
 {
@@ -106,7 +113,7 @@ void setup()
     // Set console baud rate
     SerialMon.begin(115200);
     delay(1000); // wait for serial monitor
-    Serial.println("\nLTE-M Network Test for LilyGO-T-SIM7000G w/ ESP32-Wrover");
+    Serial.println("\nSending measuring data via LTE-M by LilyGO-T-SIM7000G w/ ESP32-Wrover");
 
     // Set LED OFF
     pinMode(LED_PIN, OUTPUT);
@@ -126,12 +133,13 @@ void setup()
     }
     Serial.println();
     SerialAT.begin(UART_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
-    delay(2000);
+    delay(10000);
 }
 
 void loop()
 {
   String res;
+  bool powerFlag;
 
   Serial.println("Modem Initialization...");
   if (!modem.init()) 
@@ -258,7 +266,7 @@ void loop()
   
   res = "";
   Serial.println("Set up QoS...");
-  modem.sendAT("+SMCONF=\"QOS\",0");
+  modem.sendAT("+SMCONF=\"QOS\",1");
   if (modem.waitResponse(1000L, res) == 1) 
   {
     res.replace(GSM_NL "OK" GSM_NL, "");
@@ -277,30 +285,51 @@ void loop()
   res = "";
   Serial.println("Connecting MQTT...");
   modem.sendAT("+SMCONN");
-  if (modem.waitResponse(5000L, res) == 1) 
+  if (modem.waitResponse(1000L, res) == 1) 
   {
     res.replace(GSM_NL "OK" GSM_NL, "");
     Serial.println(res);
   }
-
-  char str[10]; sprintf(str, "%5d", count);
-  char msg[30] = "Count = "; strcat(msg,str);
-  Serial.printf("Count = %d\n", count);
-
+  /************ Read measuring data ******************************/
   float Vbat = readBattery(BAT_ADC);
   Serial.printf("Vbat  = %5.0f mV\n", Vbat);
-  strcat(msg,"; Vbat = ");
-  sprintf(str, "%5.0f", Vbat); strcat(msg,str);
-  strcat(msg, " mV");
-  Serial.printf("%s\n", msg);
+  if (Vbat < 0.01) 
+  {
+    powerFlag = true;   // USB powered device
+    Serial.printf("USB powered device\n");
+  }
+
+  if (powerFlag) 
+  {
+    Serial.printf("Reading GPS data...\n");
+    readGPS();
+  }
+temp = 23.4; humi = 55.5;
+  StaticJsonDocument<192> doc;
+  doc["node"] = "TTGO-LTE";
   
+  String sLat = String(lat,2); doc["lat"] = sLat;   // conversion float to string
+  String sLon = String(lon,2); doc["lon"] = sLon;
+  String sAlt = String(alt,1); doc["alt"] = sAlt;
+  String sSpd = String(speed,1); doc["spd"] = sSpd;
+
+  String sTemp = String(temp,1); doc["temp"] = sTemp;
+  String sHumi = String(humi,0); doc["humi"] = sHumi;
+  String sVbat = String(Vbat,0); doc["vbat"] = sVbat;
+
+  // Generate the minified JSON and send it to the Serial port.
+  serializeJsonPretty(doc, Serial);
+  Serial.println();
+  
+  char msg[192];
+  serializeJsonPretty(doc, msg);
   size_t len = strlen(msg);
   Serial.printf("Message length = %d\n", len);
   
   res = "";
   Serial.println("Send packet...");
-  modem.sendAT("+SMPUB=\"update\",\"30\",1,1");
-  delay(10);
+  modem.sendAT("+SMPUB=\"update\",\"" + String(len) +"\",1,1");
+  delay(100);
   SerialAT.println(msg); 
   if (modem.waitResponse(2000L, res) == 1) 
   {
@@ -326,6 +355,6 @@ void loop()
     Serial.println(res);
   }
   digitalWrite(LED_PIN, HIGH);
-  count++;
-  delay(10000);
+
+  delay(60000);
 }

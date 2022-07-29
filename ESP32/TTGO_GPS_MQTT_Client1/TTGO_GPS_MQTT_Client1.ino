@@ -314,7 +314,7 @@ void loop()
         }
 #endif
     }
-    mqtt.disconnect();
+    //mqtt.disconnect();
     if (!mqtt.connected()) 
     {
         Serial.println("=== MQTT NOT CONNECTED ===");
@@ -328,6 +328,7 @@ void loop()
         delay(100);
         return;
     }
+    else mqttConnect();
   }
   mqtt.loop();
 }

@@ -2,12 +2,16 @@
  * File: M5Stack_MQTT_Client1.ino
  * 
  * based on https://github.com/survivingwithandroid/ESP32-MQTT
+ *  & https://esp32-server.de/ntp/
  * 
  */
 #include <M5Stack.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include "arduino_secrets.h"
+
+#define NTP_SERVER "de.pool.ntp.org"
+#define TZ_INFO "WEST-1DWEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00" // Western European Time
 
 // MQTT client
 WiFiClient wifiClient;
@@ -31,6 +35,10 @@ void connectToWiFi()
 
 void callback(char* topic, byte* payload, unsigned int length) 
 {
+  tm local;
+  getLocalTime(&local);
+  Serial.println(&local, "Date: %d.%m.%y  Time: %H:%M:%S"); // formatted output
+  
   M5.Speaker.tone(2160); delay(50), M5.Speaker.end();
   Serial.println("Message received:");
   for (int i = 0; i < length; i++) 
@@ -41,8 +49,9 @@ void callback(char* topic, byte* payload, unsigned int length)
   
   M5.Lcd.fillScreen(BLACK);
   displayHeader();
-  M5.Lcd.setCursor(10, 40);
-  M5.Lcd.println("Message received:");
+  M5.Lcd.setCursor(10, 25);
+  M5.Lcd.println("Message received @ ");
+  M5.Lcd.println(&local, "        %d.%m.%y %H:%M:%S");
   for (int i = 0; i < length; i++) 
   {
     M5.Lcd.print((char)payload[i]);
@@ -70,6 +79,13 @@ void setup()
   
   connectToWiFi();
   setupMQTT();  
+
+  setenv("TZ", TZ_INFO, 1);          // set time zone
+  tzset();
+  Serial.println("Get NTP Time...");
+  struct tm local;
+  configTzTime(TZ_INFO, NTP_SERVER); // NTP Synchronization
+  getLocalTime(&local, 10000);       // for 10 s
 }
 
 void reconnect() 
@@ -93,6 +109,7 @@ void reconnect()
 
 void loop() 
 {
+  
   if (!mqttClient.connected()) reconnect();
   mqttClient.loop();
 }

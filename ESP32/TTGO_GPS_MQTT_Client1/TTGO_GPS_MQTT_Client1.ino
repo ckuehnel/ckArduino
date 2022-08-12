@@ -176,13 +176,13 @@ void setup()
     // To skip it, call init() instead of restart()
     Serial.println("Initializing modem...");
     if (!modem.restart()) Serial.println("Failed to restart modem, attempting to continue without restarting");
-
+/*
     String name = modem.getModemName();
     DBG("Modem Name:", name);
 
     String modemInfo = modem.getModemInfo();
     DBG("Modem Info:", modemInfo);
-
+*/
 #if TINY_GSM_USE_GPRS
     // Unlock your SIM card with a PIN if needed
     if (GSM_PIN && modem.getSimStatus() != 3) {

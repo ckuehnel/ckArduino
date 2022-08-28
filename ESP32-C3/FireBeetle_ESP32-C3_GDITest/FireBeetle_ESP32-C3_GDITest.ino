@@ -1,5 +1,5 @@
 /*
- * File: Beetle ESP32-C3 GDITest.ino
+ * File: FireBeetle ESP32-C3 GDITest.ino
  * 
  * @file basicTest.ino
  * @brief Demonstrate various graphic painting effects

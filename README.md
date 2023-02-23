@@ -15,7 +15,7 @@ Alle Dateien aus der zweiten Auflage des Buchs
 
 Arduino - 
 Das umfassende Handbuch.
-Rheinwerk-Verlag, 2020
+Rheinwerk-Verlag, 2023
 ISBN 978-3-8362-9104-0
 
 sind im Repository https://github.com/ckuehnel/Arduino2023 enthalten.
